@@ -65,6 +65,7 @@ class Recipe(models.Model):
     name = models.CharField(
         'Название блюда',
         blank=False,
+        max_length=200,
         help_text='Введите название блюда',
     )
     time = models.IntegerField(
@@ -85,10 +86,9 @@ class Recipe(models.Model):
         verbose_name='Автор рецепта'
     )
     ingredients = models.ManyToManyField(
-        Ingredient,
+        'Ingredient',
         through='RecipeIngredient',
-        through_fields=("ingredient", "recipe"),
-        blank=False,
+        through_fields=('recipe', 'ingredient'),
         verbose_name='Ингридиент',
     )
     description = models.TextField(
@@ -98,7 +98,7 @@ class Recipe(models.Model):
         blank=False,
     )
     tags = models.ManyToManyField(
-        Tag,
+        'Tag',
         through='RecipeTag',
         blank=False,
         verbose_name='Тег',
@@ -127,14 +127,14 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-    ),
+    )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
-    ),
+    )
     amount = models.IntegerField(
         validators=[MinValueValidator(1)],
-    ),
+    )
 
     class Meta:
         ordering = ['ingredient']
@@ -179,7 +179,7 @@ class RecipeFavorite(models.Model):
         ordering = ['user']
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'favorite_recipe'],
+                fields=['user', 'favorite_recipe'],
                 name='unique_recipe'
             )
         ]
@@ -207,7 +207,7 @@ class ShoppingChart(models.Model):
         verbose_name = 'Список покупок'
         constraints = [
             models.UniqueConstraint(
-                fields=['name', 'recipe_buy'],
+                fields=['user', 'recipe_buy'],
                 name='unique_shoppinglist'
             )
         ]
