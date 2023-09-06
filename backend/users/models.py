@@ -40,18 +40,18 @@ class User(AbstractUser):
         return self.username
 
 
-class Follow(models.Model):
+class Subscription(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='follower',
+        related_name='subscriber',
         verbose_name='Подписчик',
     )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='following',
-        verbose_name='Подписка',
+        related_name='subscribing',
+        verbose_name='Автор',
     )
 
     class Meta:
@@ -63,3 +63,6 @@ class Follow(models.Model):
                 name='unique_follow'
             )
         ]
+
+    def __str__(self):
+        return f'{self.user} follows {self.author}'

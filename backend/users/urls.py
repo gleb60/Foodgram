@@ -1,15 +1,16 @@
 from django.urls import include, path
 from rest_framework import routers
+from .views import SubscriptionView, SubscribeView
 
-from .views import GetJwtToken, RegistrationView, UserViewSet
 
 app_name = 'users'
 
-v1_router = routers.DefaultRouter()
-v1_router.register('users', UserViewSet)
+router = routers.DefaultRouter()
 
 urlpatterns = [
-    path('v1/auth/signup/', RegistrationView.as_view(), name='signup'),
-    path('v1/auth/token/', GetJwtToken.as_view(), name='token'),
-    path('v1/', include(v1_router.urls)),
+    path('users/subscriptions/', SubscriptionView.as_view()),
+    path('', include('djoser.urls')),
+    path('auth/', include('djoser.urls.authtoken')),
+    path('users/<int:pk>/subscribe/', SubscribeView.as_view()),
 ]
+

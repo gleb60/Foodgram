@@ -3,108 +3,64 @@ from django.core.mail import send_mail
 from django.shortcuts import get_object_or_404
 from rest_framework import filters, status, viewsets
 from rest_framework.decorators import action
-from rest_framework.generics import CreateAPIView
+from rest_framework.generics import ListAPIView
+from rest_framework.views import APIView
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.tokens import AccessToken
+from django.core.exceptions import ValidationError
 
-from .models import User
-from .permissions import IsAdminOrSuperuser
-from .serializers import (TokenSerializer, UserRegistrationSerializer,
-                          UserSerializer)
-
-
-class UserViewSet(viewsets.ModelViewSet):
-    """
-    Получение, редактирование и удаление пользователя.
-    """
-    queryset = User.objects.all()
-    serializer_class = UserSerializer
-    permission_classes = (IsAdminOrSuperuser,)
-    pagination_class = LimitOffsetPagination
-    lookup_field = 'username'
-    filter_backends = (filters.SearchFilter,)
-    search_fields = ('username',)
-    http_method_names = ['get', 'post', 'patch', 'delete']
-
-    @action(
-        methods=['GET', 'PATCH'],
-        detail=False,
-        permission_classes=[IsAuthenticated]
-    )
-    def me(self, request):
-        user = get_object_or_404(User, pk=request.user.pk)
-
-        if request.method == 'GET':
-            serializer = UserSerializer(user)
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        if request.method == 'PATCH':
-            serializer = UserSerializer(user, data=request.data, partial=True)
-            if serializer.is_valid():
-                serializer.save(role=user.role)
-                return Response(serializer.data, status=status.HTTP_200_OK)
-            else:
-                return Response(
-                    serializer.errors, status=status.HTTP_400_BAD_REQUEST
-                )
+from .models import Subscription, User
+from .serializers import SubscriptionSerializer, SubscribeSerializer
+from recipes.permissions import IsAuthorOrAdmin
 
 
-class RegistrationView(CreateAPIView):
-    """
-    Регистрация пользователя
-    """
+class SubscriptionView(ListAPIView):
+    permission_classes = (IsAuthorOrAdmin,)
 
-    permission_classes = [AllowAny, ]
-    serializer_class = UserRegistrationSerializer
+    def get(self, request):
+        user = request.user
+        authors = User.objects.filter(subscribing__user=user)
+        object = self.paginate_queryset(authors)
+        serializer = SubscriptionSerializer(
+            object,
+            many=True,
+            context={'request': request}
+        )
 
-    def post(self, request, *args, **kwargs):
-        serializer = UserRegistrationSerializer(data=request.data)
+        return self.get_paginated_response(serializer.data)
+
+
+class SubscribeView(APIView):
+    def post(self, request, pk):
+        user = request.user
+        data = {
+            'author': pk,
+            'user': user.pk,
+        }
+        if pk == user.pk:
+            raise ValidationError('Нельзя подписаться на самого себя.')
+        if Subscription.objects.filter(author=pk, user=user).exists():
+            raise ValidationError('Вы уже подписаны на этого пользователя.')
+
+        serializer = SubscribeSerializer(
+            data=data,
+            context={
+                'request': request
+            }
+        )
         serializer.is_valid(raise_exception=True)
-        username = serializer.validated_data.get('username')
-        email = serializer.validated_data.get('email')
-        user, created = User.objects.get_or_create(
-            username=username,
-            email=email
-        )
-        confirmation_code = default_token_generator.make_token(user)
-        user.confirmation_code = confirmation_code
-        user.save()
-        send_mail(
-            'Код подтверждения почты.',
-            f'Здратвсвуйте, {user.username}!'
-            f'\nВаш код подтверждения: {confirmation_code}.',
-            'from@example.com',
-            [email],
-            fail_silently=False,
-        )
+        serializer.save()
 
-        return Response(
-            serializer.data,
-            status=status.HTTP_200_OK,
-        )
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    def delete(self, request, pk):
+        user = request.user
 
-class GetJwtToken(CreateAPIView):
-    """
-    Получение токена.
-    """
-    permission_classes = [AllowAny, ]
+        if not Subscription.objects.filter(author=pk, user=user).exists():
+            raise ValidationError('Такой подписки не существует.')
+        subscribe = Subscription.objects.filter(author=pk, user=user)
+        subscribe.delete()
 
-    def post(self, request, *args, **kwargs):
-        serializer = TokenSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        data = serializer.validated_data
-        user = get_object_or_404(User, username=data['username'])
-        if default_token_generator.check_token(
-                user, serializer.validated_data['confirmation_code']):
-            token = AccessToken.for_user(user)
-            return Response(
-                {'token': str(token)},
-                status=status.HTTP_200_OK,
-            )
-        return Response(
-            {'confirmation_code': 'Неверный код подтверждения.'},
-            status=status.HTTP_400_BAD_REQUEST,
-        )
+        return Response(status=status.HTTP_204_NO_CONTENT)
