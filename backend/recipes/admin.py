@@ -88,7 +88,7 @@ class TagAdmin(admin.ModelAdmin):
     list_display = (
         'id',
         'name',
-        'colour',
+        'color',
         'slug',
     )
     search_fields = (

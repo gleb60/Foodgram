@@ -13,7 +13,7 @@ class Tag(models.Model):
         unique=True,
         help_text='Название тэга',
     )
-    colour = models.CharField(
+    color = models.CharField(
         'Цвет',
         max_length=7,
         unique=True,

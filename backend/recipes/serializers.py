@@ -1,8 +1,8 @@
 from rest_framework.relations import SlugRelatedField
-from rest_framework.serializers import ModelSerializer
+from rest_framework.serializers import ModelSerializer, SlugRelatedField
 
 from .models import (
-    Recipe, Tag, Ingredient,  RecipeFavorite, RecipeIngredient, ShoppingChart,
+    Recipe, Tag, Ingredient, RecipeFavorite, RecipeIngredient, ShoppingChart,
 )
 
 
@@ -20,8 +20,9 @@ class RecipeSerializer(ModelSerializer):
 
 class TagSerializer(ModelSerializer):
     class Meta:
-        fields = ('id', 'title', 'slug', 'description')
         model = Tag
+        fields = ('id', 'name', 'color', 'slug')
+
 
 
 # class IngredientSerializer(ModelSerializer):
