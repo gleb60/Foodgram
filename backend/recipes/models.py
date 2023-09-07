@@ -68,7 +68,7 @@ class Recipe(models.Model):
         max_length=200,
         help_text='Введите название блюда',
     )
-    time = models.IntegerField(
+    cooking_time = models.IntegerField(
         'Время приготовления',
         blank=False,
         null=False,
@@ -128,19 +128,20 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        verbose_name='рецепт'
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
+        verbose_name='ингредиент'
     )
     amount = models.IntegerField(
         validators=[MinValueValidator(1)],
-        verbose_name='количество',
-        help_text='Введите количество ингридиента',
+        verbose_name='количество'
     )
 
     class Meta:
-        ordering = ['ingredient']
+        ordering = ['-id']
         verbose_name = 'Ингредиент рецепта'
         verbose_name_plural = 'Ингредиенты рецепта'
 

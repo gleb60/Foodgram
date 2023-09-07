@@ -5,7 +5,7 @@ from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
 from .models import Recipe, Tag, Ingredient, RecipeFavorite
 
 from .permissions import IsAuthorOrAdmin
-from .serializers import RecipeSerializer, TagSerializer
+from .serializers import RecipeSerializer, TagSerializer, IngredientsSerializer
 
 
 class RecipeViewSet(ModelViewSet):
@@ -22,3 +22,11 @@ class TagsViewSet(ModelViewSet):
     serializer_class = TagSerializer
     pagination_class = None
     permission_classes = [AllowAny]
+
+
+class IngredientsViewSet(ModelViewSet):
+    queryset = Ingredient.objects.all()
+    serializer_class = IngredientsSerializer
+    pagination_class = None
+    permission_classes = [AllowAny]
+    search_fields = ('^name',)
