@@ -92,10 +92,10 @@ class Recipe(models.Model):
         through_fields=('recipe', 'ingredient'),
         verbose_name='Ингридиент',
     )
-    description = models.TextField(
+    text = models.TextField(
         'Описание',
         max_length=1000,
-        help_text='Опишите приготовление своего блюда или сделайте описание его',
+        help_text='Опишите свое блюдо',
         blank=False,
     )
     tags = models.ManyToManyField(
@@ -107,7 +107,6 @@ class Recipe(models.Model):
     image = models.ImageField(
         'Картинка',
         upload_to='recipes/images/',
-        blank=False,
         help_text='Выберите картинку для вашего рецепта',
     )
     pub_date = models.DateTimeField(
@@ -128,11 +127,13 @@ class RecipeIngredient(models.Model):
     recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
+        related_name='recipeingredient',
         verbose_name='рецепт'
     )
     ingredient = models.ForeignKey(
         Ingredient,
         on_delete=models.CASCADE,
+        related_name='recipeingredient',
         verbose_name='ингредиент'
     )
     amount = models.IntegerField(

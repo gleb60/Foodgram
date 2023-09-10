@@ -1,20 +1,30 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.viewsets import ModelViewSet, ReadOnlyModelViewSet
+from django_filters.rest_framework import DjangoFilterBackend
 
 from .models import Recipe, Tag, Ingredient, RecipeFavorite
+from .pagination import RecipesResultsPagination
 
 from .permissions import IsAuthorOrAdmin
-from .serializers import RecipeSerializer, TagSerializer, IngredientsSerializer
+from .serializers import (
+    RecipeGetSerializer, TagSerializer, IngredientsSerializer,
+    RecipePostPatchDelSerializer
+)
 
 
-class RecipeViewSet(ModelViewSet):
+class RecipesViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeSerializer
+    serializer_class = RecipeGetSerializer
     permission_classes = [IsAuthenticated, IsAuthorOrAdmin]
+    filter_backends = (DjangoFilterBackend,)
+    pagination_class = RecipesResultsPagination
 
-    def perform_create(self, serializer):
-        serializer.save(author=self.request.user)
+    def get_serializer_class(self):
+        if self.action == 'list' or self.action == 'retrieve':
+            return RecipeGetSerializer
+
+        return RecipePostPatchDelSerializer
 
 
 class TagsViewSet(ModelViewSet):
