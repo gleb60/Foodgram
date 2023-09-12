@@ -1,8 +1,8 @@
 import base64
 
+
 from rest_framework.serializers import (
-    ModelSerializer, SlugRelatedField, ReadOnlyField, PrimaryKeyRelatedField,
-    ImageField,
+    ModelSerializer, ReadOnlyField, PrimaryKeyRelatedField, ImageField,
 )
 from rest_framework.fields import (
     SerializerMethodField, IntegerField,
@@ -11,7 +11,7 @@ from django.core.files.base import ContentFile
 
 from .models import (
     Recipe, Tag, RecipeTag, Ingredient, RecipeFavorite, RecipeIngredient,
-    ShoppingChart,
+    ShoppingCart,
 )
 from users.serializers import CustomUserSerializer
 
@@ -101,7 +101,7 @@ class RecipeGetSerializer(ModelSerializer):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
-        return ShoppingChart.objects.filter(
+        return ShoppingCart.objects.filter(
             recipe_buy=obj, user=request.user
         ).exists()
 
@@ -190,19 +190,21 @@ class RecipePostPatchDelSerializer(ModelSerializer):
 class RecipeFavoriteSerializer(ModelSerializer):
     class Meta:
         model = Recipe
-        fields = ('id'
-                  'name'
-                  'image'
-                  'cooking_time',
-                  )
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time',
+        )
 
 
 class FavoriteSerializer(ModelSerializer):
     class Meta:
         model = RecipeFavorite
-        fields = ('user'
-                  'favorite_recipe',
-                  )
+        fields = (
+            'user',
+            'favorite_recipe',
+        )
 
     def to_representation(self, instance):
         return RecipeFavoriteSerializer(instance.favorite_recipe).data
@@ -210,7 +212,10 @@ class FavoriteSerializer(ModelSerializer):
 
 class ShoppingChartSerializer(ModelSerializer):
     class Meta:
-        model = ShoppingChart
-        fields = ('user'
-                  'recipe_buy',
-                  )
+        model = Recipe
+        fields = (
+            'id',
+            'name',
+            'image',
+            'cooking_time'
+        )

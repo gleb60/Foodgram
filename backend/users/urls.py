@@ -13,4 +13,3 @@ urlpatterns = [
     path('auth/', include('djoser.urls.authtoken')),
     path('users/<int:pk>/subscribe/', SubscribeView.as_view()),
 ]
-
