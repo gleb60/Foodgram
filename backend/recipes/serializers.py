@@ -125,10 +125,6 @@ class RecipePostPatchDelSerializer(ModelSerializer):
             'ingredients', 'tags', 'cooking_time',
         )
 
-    def to_representation(self, instance):
-        serializer = RecipeGetSerializer(instance)
-        return serializer.data
-
     def create(self, validated_data):
         ingredients = validated_data.pop('recipeingredient')
         tags = validated_data.pop('tags')
