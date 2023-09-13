@@ -2,7 +2,6 @@ from rest_framework import status
 from rest_framework.generics import ListAPIView
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from django.core.exceptions import ValidationError
 
 from .models import Subscription, User
 from .serializers import SubscriptionSerializer, SubscribeSerializer
