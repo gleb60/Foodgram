@@ -1,5 +1,6 @@
 from djoser.serializers import UserSerializer, UserCreateSerializer
 
+from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
 from .models import User, Subscription
 from recipes.models import Recipe
@@ -77,6 +78,15 @@ class SubscribeSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subscription
         fields = ('user', 'author',)
+
+    def validate(self, data):
+        user = data['user']
+        author_pk = data['author']
+        if author_pk == user:
+            raise ValidationError('Нельзя подписаться на самого себя.')
+        if Subscription.objects.filter(author=author_pk, user=user).exists():
+            raise ValidationError('Вы уже подписаны на этого пользователя.')
+        return data
 
     def to_representation(self, instance):
         return SubscriptionSerializer(

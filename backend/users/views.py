@@ -32,17 +32,7 @@ class SubscribeView(APIView):
             'author': pk,
             'user': user.pk,
         }
-        if pk == user.pk:
-            raise ValidationError('Нельзя подписаться на самого себя.')
-        if Subscription.objects.filter(author=pk, user=user).exists():
-            raise ValidationError('Вы уже подписаны на этого пользователя.')
-
-        serializer = SubscribeSerializer(
-            data=data,
-            context={
-                'request': request
-            }
-        )
+        serializer = SubscribeSerializer(data=data)
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -50,9 +40,6 @@ class SubscribeView(APIView):
 
     def delete(self, request, pk):
         user = request.user
-
-        if not Subscription.objects.filter(author=pk, user=user).exists():
-            raise ValidationError('Такой подписки не существует.')
         subscribe = Subscription.objects.filter(author=pk, user=user)
         subscribe.delete()
 

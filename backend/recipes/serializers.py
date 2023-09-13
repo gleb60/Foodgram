@@ -1,12 +1,12 @@
 import base64
 
-
 from rest_framework.serializers import (
     ModelSerializer, ReadOnlyField, PrimaryKeyRelatedField, ImageField,
 )
 from rest_framework.fields import (
     SerializerMethodField, IntegerField,
 )
+from rest_framework.exceptions import ValidationError
 from django.core.files.base import ContentFile
 
 from .models import (
@@ -202,8 +202,37 @@ class FavoriteSerializer(ModelSerializer):
             'favorite_recipe',
         )
 
+    def validate(self, data):
+        recipe = data['favorite_recipe']
+        user = data['user']
+        if RecipeFavorite.objects.filter(
+                favorite_recipe=recipe,
+                user=user,
+        ).exists():
+            raise ValidationError('Рецепт уже в избранном.')
+        return data
+
     def to_representation(self, instance):
         return RecipeFavoriteSerializer(instance.favorite_recipe).data
+
+
+class FavoriteDeleteSerializer(ModelSerializer):
+    class Meta:
+        model = RecipeFavorite
+        fields = (
+            'user',
+            'favorite_recipe',
+        )
+
+    def validate(self, data):
+        recipe = data['favorite_recipe']
+        user = data['user']
+        if not RecipeFavorite.objects.filter(
+                favorite_recipe=recipe,
+                user=user,
+        ).exists():
+            raise ValidationError('Такого лайка еще нет.')
+        return data
 
 
 class ShoppingChartSerializer(ModelSerializer):

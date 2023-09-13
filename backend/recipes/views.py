@@ -17,7 +17,8 @@ from .pagination import RecipesResultsPagination
 from .permissions import IsAuthorOrAdmin
 from .serializers import (
     RecipeGetSerializer, TagSerializer, IngredientsSerializer,
-    RecipePostPatchDelSerializer, FavoriteSerializer, ShoppingChartSerializer,
+    RecipePostPatchDelSerializer, FavoriteSerializer, FavoriteDeleteSerializer,
+    ShoppingChartSerializer,
 )
 
 
@@ -56,7 +57,6 @@ class RecipesViewSet(ModelViewSet):
         model.objects.create(
             recipe_buy=recipe,
             user=user,
-            # favorite_recipe=recipe.favorite_recipe,
         )
         serializer = ShoppingChartSerializer(recipe)
 
@@ -116,14 +116,8 @@ class FavoriteView(APIView):
             'favorite_recipe': favorite_id,
             'user': user.id,
         }
-        if RecipeFavorite.objects.filter(
-                favorite_recipe=favorite_id,
-                user=user,
-        ).exists():
-            raise ValidationError('Рецепт уже в избранном.')
 
         serializer = FavoriteSerializer(data=data)
-
         serializer.is_valid(raise_exception=True)
         serializer.save()
 
@@ -132,12 +126,12 @@ class FavoriteView(APIView):
     def delete(self, request, favorite_id):
         user = request.user
 
-        if not RecipeFavorite.objects.filter(
-                favorite_recipe=favorite_id,
-                user=user,
-        ).exists():
-            raise ValidationError('Такого лайка еще нет.')
-
+        data = {
+            'favorite_recipe': favorite_id,
+            'user': user.id,
+        }
+        serializer = FavoriteDeleteSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
         subscribe = RecipeFavorite.objects.filter(
             favorite_recipe=favorite_id,
             user=user,

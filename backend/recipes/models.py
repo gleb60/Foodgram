@@ -4,6 +4,8 @@ from django.db import models
 
 User = get_user_model()
 
+MAX_LENGTH_NAME = 200
+
 
 class Tag(models.Model):
     name = models.CharField(
@@ -15,7 +17,7 @@ class Tag(models.Model):
     )
     color = models.CharField(
         'Цвет',
-        max_length=7,
+        max_length=40,
         unique=True,
         help_text='Укажите цвет тега в формате "HEX"'
     )
@@ -36,7 +38,7 @@ class Tag(models.Model):
 class Ingredient(models.Model):
     name = models.CharField(
         'Название ингридиента',
-        max_length=200,
+        max_length=MAX_LENGTH_NAME,
         blank=False,
     )
     measurement_unit = models.CharField(
@@ -65,7 +67,7 @@ class Recipe(models.Model):
     name = models.CharField(
         'Название блюда',
         blank=False,
-        max_length=200,
+        max_length=MAX_LENGTH_NAME,
         help_text='Введите название блюда',
     )
     cooking_time = models.IntegerField(
