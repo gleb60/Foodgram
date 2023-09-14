@@ -5,19 +5,20 @@ from django.db import models
 User = get_user_model()
 
 MAX_LENGTH_NAME = 200
+MAX_LENGTH_COLOR_AND_MEASUREMENT = 40
 
 
 class Tag(models.Model):
     name = models.CharField(
         'Тег',
         blank=False,
-        max_length=100,
+        max_length=MAX_LENGTH_NAME,
         unique=True,
         help_text='Название тэга',
     )
     color = models.CharField(
         'Цвет',
-        max_length=40,
+        max_length=MAX_LENGTH_COLOR_AND_MEASUREMENT,
         unique=True,
         help_text='Укажите цвет тега в формате "HEX"'
     )
@@ -43,7 +44,7 @@ class Ingredient(models.Model):
     )
     measurement_unit = models.CharField(
         'Единицы измерения',
-        max_length=30,
+        max_length=MAX_LENGTH_COLOR_AND_MEASUREMENT,
         blank=False,
         help_text='Укажите единицы измерения ингридиента'
     )
@@ -96,7 +97,6 @@ class Recipe(models.Model):
     )
     text = models.TextField(
         'Описание',
-        max_length=1000,
         help_text='Опишите свое блюдо',
         blank=False,
     )

@@ -125,12 +125,7 @@ class RecipePostPatchDelSerializer(ModelSerializer):
             'ingredients', 'tags', 'cooking_time',
         )
 
-    def create(self, validated_data):
-        ingredients = validated_data.pop('recipeingredient')
-        tags = validated_data.pop('tags')
-        author = self.context.get('request').user
-        recipe = Recipe.objects.create(author=author, **validated_data)
-
+    def create_update_ingredients(self, recipe, ingredients):
         for ingredient in ingredients:
             current_ingredient = Ingredient.objects.get(id=ingredient['id'])
             RecipeIngredient.objects.create(
@@ -139,12 +134,13 @@ class RecipePostPatchDelSerializer(ModelSerializer):
                 amount=ingredient['amount'],
             )
 
-        for tag in tags:
-            RecipeTag.objects.create(
-                tag=tag,
-                recipe=recipe
-            )
-
+    def create(self, validated_data):
+        ingredients = validated_data.pop('recipeingredient')
+        tags = validated_data.pop('tags')
+        author = self.context.get('request').user
+        recipe = Recipe.objects.create(author=author, **validated_data)
+        self.create_update_ingredients(recipe, ingredients)
+        recipe.tags.set(tags)
         return recipe
 
     def update(self, instance, validated_data):
@@ -160,21 +156,8 @@ class RecipePostPatchDelSerializer(ModelSerializer):
         RecipeTag.objects.filter(recipe=instance).delete()
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('recipeingredient')
-
-        for ingredient in ingredients:
-            current_ingredient = Ingredient.objects.get(id=ingredient['id'])
-            RecipeIngredient.objects.create(
-                ingredient=current_ingredient,
-                recipe=instance,
-                amount=ingredient['amount'],
-            )
-
-        for tag in tags:
-            RecipeTag.objects.create(
-                tag=tag,
-                recipe=instance
-            )
-
+        self.create_update_ingredients(instance, ingredients)
+        instance.tags.set(tags)
         instance.save()
 
         return instance
