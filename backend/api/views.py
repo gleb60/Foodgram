@@ -74,10 +74,6 @@ class ShoppingCartViewSet(ModelViewSet):
     serializer_class = RecipeGetSerializer
     permission_classes = [IsAuthenticated]
 
-    @action(
-        detail=True,
-        methods=('get',),
-    )
     def download_shopping_cart(self, request):
         ingredient_list = 'Ваш список ингредиентов: '
         ingredients = (
