@@ -1,24 +1,69 @@
-from django_filters.rest_framework import DjangoFilterBackend
-from django.shortcuts import get_object_or_404
 from django.db.models import Sum
 from django.http import HttpResponse
-from rest_framework.permissions import IsAuthenticated, AllowAny
-from rest_framework.viewsets import ModelViewSet
-from rest_framework.decorators import action
-from rest_framework.exceptions import ValidationError
-from rest_framework.response import Response
-from rest_framework import status
-
-from recipes.models import (
-    Recipe, Tag, Ingredient, RecipeFavorite, ShoppingCart, RecipeIngredient,
-)
+from django.shortcuts import get_object_or_404
+from django_filters.rest_framework import DjangoFilterBackend
+from recipes.models import (Ingredient, Recipe, RecipeFavorite,
+                            RecipeIngredient, ShoppingCart, Tag)
 from recipes.pagination import RecipesResultsPagination
 from recipes.permissions import IsAuthorOrAdmin
-from recipes.serializers import (
-    RecipeGetSerializer, TagSerializer, IngredientsSerializer,
-    RecipePostPatchDelSerializer, FavoriteSerializer, FavoriteDeleteSerializer,
-    ShoppingChartSerializer,
-)
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.exceptions import ValidationError
+from rest_framework.generics import ListAPIView
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.viewsets import ModelViewSet
+from users.models import Subscription, User
+
+from api.serializers import (FavoriteDeleteSerializer, FavoriteSerializer,
+                             IngredientsSerializer, RecipeGetSerializer,
+                             RecipePostPatchDelSerializer,
+                             ShoppingChartSerializer, TagSerializer)
+
+from .serializers import SubscribeSerializer, SubscriptionSerializer
+
+
+class SubscriptionView(ListAPIView):
+    permission_classes = (IsAuthorOrAdmin,)
+
+    def get(self, request):
+        user = request.user
+        authors = User.objects.filter(subscribing__user=user)
+        object = self.paginate_queryset(authors)
+        serializer = SubscriptionSerializer(
+            object,
+            many=True,
+            context={'request': request}
+        )
+
+        return self.get_paginated_response(serializer.data)
+
+
+class SubscribeViewSet(ModelViewSet):
+    serializer_class = SubscribeSerializer
+    permission_classes = [IsAuthenticated, ]
+
+    def get_queryset(self):
+        return Subscription.objects.filter(user=self.request.user)
+
+    def subscribe(self, request, pk):
+        user = request.user
+        data = {
+            'author': pk,
+            'user': user.pk,
+        }
+        serializer = SubscribeSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED)
+
+    def unsubscribe(self, request, pk):
+        user = request.user
+        subscribe = Subscription.objects.filter(author=pk, user=user)
+        subscribe.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class RecipesViewSet(ModelViewSet):
@@ -111,7 +156,7 @@ class FavoriteViewSet(ModelViewSet):
     queryset = RecipeFavorite.objects.all()
     permission_classes = [IsAuthenticated]
 
-    def post(self, request, favorite_id):
+    def create_favorite(self, request, favorite_id):
         user = request.user
         data = {
             'favorite_recipe': favorite_id,
@@ -124,7 +169,7 @@ class FavoriteViewSet(ModelViewSet):
 
         return Response(data=serializer.data, status=status.HTTP_201_CREATED)
 
-    def delete(self, request, favorite_id):
+    def delete_favorite(self, request, favorite_id):
         user = request.user
 
         data = {
