@@ -66,7 +66,12 @@ class Base64ImageField(ImageField):
 class RecipeSerializer(ModelSerializer):
     class Meta:
         model = Recipe
-        fields = ('id', 'name', 'image', 'time',)
+        fields = (
+            'id',
+            'name',
+            'image',
+            'time',
+        )
 
 
 class RecipeIngredientSerializer(ModelSerializer):
@@ -246,17 +251,6 @@ class CustomCreateUserSerializer(UserCreateSerializer):
         fields = (
             'email', 'id', 'username', 'first_name',
             'last_name', 'password',
-        )
-
-
-class RecipeSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Recipe
-        fields = (
-            'id',
-            'name',
-            'image',
-            'cooking_time',
         )
 
 
