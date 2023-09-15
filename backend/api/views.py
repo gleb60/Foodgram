@@ -107,7 +107,7 @@ class IngredientsViewSet(ModelViewSet):
     search_fields = ('^name',)
 
 
-class FavoriteView(ModelViewSet):
+class FavoriteViewSet(ModelViewSet):
     queryset = RecipeFavorite.objects.all()
     permission_classes = [IsAuthenticated]
 

@@ -2,7 +2,7 @@ from django.urls import include, path
 from rest_framework import routers
 from users.views import SubscriptionView, SubscribeView
 from api.views import (
-    RecipesViewSet, TagsViewSet, IngredientsViewSet, FavoriteView,
+    RecipesViewSet, TagsViewSet, IngredientsViewSet, FavoriteViewSet,
     ShoppingCartViewSet,
 )
 
@@ -22,5 +22,5 @@ urlpatterns = [
     path('auth/', include('djoser.urls.authtoken')),
     path('users/<int:pk>/subscribe/', SubscribeView.as_view()),
     path('recipes/<int:favorite_id>/favorite/',
-         FavoriteView.as_view({'post': 'post', 'delete': 'delete'})),
+         FavoriteViewSet.as_view({'post': 'post', 'delete': 'delete'})),
 ]
