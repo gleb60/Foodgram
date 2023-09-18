@@ -10,14 +10,14 @@ services:
   db:
     image: postgres:13.10
     env_file:
-      - ../.env
+      - ./.env
     volumes:
       - pg_data:/var/lib/postgresql/data
 
   backend:
-    build: ../backend/
+    build: gleb60/foodgram_backend:latest
     env_file:
-      - ../.env
+      - ./.env
     volumes:
       - ../static/:/app/static/
       - ../media/:/app/media/
@@ -25,9 +25,7 @@ services:
       - db
 
   frontend:
-    build:
-      context: ../frontend
-      dockerfile: Dockerfile
+    build: gleb60/foodgram_frontend:latest
     volumes:
       - ../frontend/:/app/result_build/
 
