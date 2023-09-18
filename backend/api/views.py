@@ -2,29 +2,30 @@ from django.db.models import Sum
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
-from rest_framework import status
+from recipes.models import (Ingredient, Recipe, RecipeFavorite,
+                            RecipeIngredient, ShoppingCart, Tag)
+from recipes.pagination import RecipesResultsPagination
+from recipes.permissions import IsOwnerOrReadOnly
+from rest_framework import filters, status
 from rest_framework.decorators import action
 from rest_framework.exceptions import ValidationError
 from rest_framework.generics import ListAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
+from users.models import Subscription, User
 
+from api.filters import RecipeFilter
 from api.serializers import (FavoriteDeleteSerializer, FavoriteSerializer,
                              IngredientsSerializer, RecipeGetSerializer,
                              RecipePostPatchDelSerializer,
                              ShoppingChartSerializer, TagSerializer)
-from recipes.models import (Ingredient, Recipe, RecipeFavorite,
-                            RecipeIngredient, ShoppingCart, Tag)
-from recipes.pagination import RecipesResultsPagination
-from recipes.permissions import IsAuthorOrAdmin
-from users.models import Subscription, User
 
 from .serializers import SubscribeSerializer, SubscriptionSerializer
 
 
 class SubscriptionView(ListAPIView):
-    permission_classes = (IsAuthorOrAdmin,)
+    permission_classes = (IsAuthenticated,)
 
     def get(self, request):
         user = request.user
@@ -40,8 +41,8 @@ class SubscriptionView(ListAPIView):
 
 
 class SubscribeViewSet(ModelViewSet):
-    serializer_class = SubscribeSerializer
     permission_classes = [IsAuthenticated, ]
+    http_method_names = ['post', 'delete']
 
     def get_queryset(self):
         return Subscription.objects.filter(user=self.request.user)
@@ -68,9 +69,9 @@ class SubscribeViewSet(ModelViewSet):
 
 class RecipesViewSet(ModelViewSet):
     queryset = Recipe.objects.all()
-    serializer_class = RecipeGetSerializer
-    permission_classes = [IsAuthenticated, IsAuthorOrAdmin]
+    permission_classes = [IsOwnerOrReadOnly, ]
     filter_backends = (DjangoFilterBackend,)
+    filterset_class = RecipeFilter
     pagination_class = RecipesResultsPagination
 
     def get_serializer_class(self):
@@ -81,9 +82,13 @@ class RecipesViewSet(ModelViewSet):
 
 
 class ShoppingCartViewSet(ModelViewSet):
-    queryset = ShoppingCart.objects.all()
-    serializer_class = RecipeGetSerializer
+    # queryset = ShoppingCart.objects.all()
     permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        current_user = self.request.user
+        queryset = ShoppingCart.objects.filter(user=current_user)
+        return queryset
 
     @action(
         detail=True,
@@ -147,6 +152,7 @@ class TagsViewSet(ModelViewSet):
 class IngredientsViewSet(ModelViewSet):
     queryset = Ingredient.objects.all()
     serializer_class = IngredientsSerializer
+    filter_backends = (filters.SearchFilter,)
     pagination_class = None
     permission_classes = [AllowAny]
     search_fields = ('^name',)

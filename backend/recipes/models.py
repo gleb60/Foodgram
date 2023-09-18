@@ -23,7 +23,7 @@ class Tag(models.Model):
         help_text='Укажите цвет тега в формате "HEX"'
     )
     slug = models.SlugField(
-        'Слаг',
+        'slug',
         unique=True,
         help_text='Укажите слаг'
     )
@@ -183,7 +183,7 @@ class RecipeFavorite(models.Model):
     favorite_recipe = models.ForeignKey(
         Recipe,
         on_delete=models.CASCADE,
-        related_name='users_favorites',
+        related_name='favorite',
         verbose_name='избранный рецепт'
     )
 

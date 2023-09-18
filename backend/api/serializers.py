@@ -2,14 +2,13 @@ import base64
 
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from recipes.models import (Ingredient, Recipe, RecipeFavorite,
+                            RecipeIngredient, ShoppingCart, Tag)
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import IntegerField, SerializerMethodField
 from rest_framework.serializers import (ImageField, ModelSerializer,
                                         PrimaryKeyRelatedField, ReadOnlyField)
-
-from recipes.models import (Ingredient, Recipe, RecipeFavorite,
-                            RecipeIngredient, RecipeTag, ShoppingCart, Tag)
 from users.models import Subscription, User
 
 
@@ -28,8 +27,7 @@ class CustomUserSerializer(UserSerializer):
         if request is None or request.user.is_anonymous:
             return False
         return Subscription.objects.filter(
-            user=request.user, author=obj
-        ).exists()
+            user=request.user, author=obj).exists()
 
 
 class TagSerializer(ModelSerializer):
@@ -71,7 +69,7 @@ class RecipeSerializer(ModelSerializer):
             'id',
             'name',
             'image',
-            'time',
+            'cooking_time',
         )
 
 
@@ -96,13 +94,13 @@ class RecipeGetSerializer(ModelSerializer):
     ingredients = SerializerMethodField()
     # image = Base64ImageField()
     is_favorited = SerializerMethodField()
-    in_shopping_cart = SerializerMethodField()
+    is_in_shopping_cart = SerializerMethodField()
 
     class Meta:
         model = Recipe
         fields = (
             'id', 'tags', 'author', 'ingredients', 'is_favorited',
-            'in_shopping_cart', 'name', 'image', 'text', 'cooking_time',
+            'is_in_shopping_cart', 'name', 'image', 'text', 'cooking_time',
         )
 
     def get_ingredients(self, obj):
@@ -118,7 +116,7 @@ class RecipeGetSerializer(ModelSerializer):
             favorite_recipe=obj, user=request.user
         ).exists()
 
-    def get_in_shopping_cart(self, obj):
+    def get_is_in_shopping_cart(self, obj):
         request = self.context.get('request')
         if request is None or request.user.is_anonymous:
             return False
@@ -165,18 +163,17 @@ class RecipePostPatchDelSerializer(ModelSerializer):
         return recipe
 
     def update(self, instance, validated_data):
-        instance = super().update(instance, validated_data)
-
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('recipeingredient')
 
-        RecipeIngredient.objects.filter(recipe=instance).delete()
-        RecipeTag.objects.filter(recipe=instance).delete()
+        instance = super().update(instance, validated_data)
 
-        self.create_update_ingredients(instance, ingredients)
+        instance.tags.clear()
+        instance.ingredients.clear()
+
         instance.tags.set(tags)
+        self.create_update_ingredients(instance, ingredients)
         instance.save()
-
         return instance
 
     def to_representation(self, instance):
@@ -255,7 +252,9 @@ class CustomCreateUserSerializer(UserCreateSerializer):
         )
 
 
-class SubscriptionSerializer(serializers.ModelSerializer):
+class SubscriptionSerializer(ModelSerializer):
+    """Получение подписок пользователя."""
+
     recipes = serializers.SerializerMethodField(read_only=True)
     recipes_count = serializers.SerializerMethodField(read_only=True)
     is_subscribed = serializers.SerializerMethodField(read_only=True)
@@ -284,7 +283,9 @@ class SubscriptionSerializer(serializers.ModelSerializer):
         return Recipe.objects.filter(author=obj).count()
 
 
-class SubscribeSerializer(serializers.ModelSerializer):
+class SubscribeSerializer(ModelSerializer):
+    """Создание подписки пользователя на автора."""
+
     class Meta:
         model = Subscription
         fields = ('user', 'author',)
@@ -301,5 +302,5 @@ class SubscribeSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         return SubscriptionSerializer(
             instance.author,
-            context={'request': self.context.get('request')}
+            context={'user': instance.user}
         ).data
