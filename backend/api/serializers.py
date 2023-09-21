@@ -146,7 +146,7 @@ class RecipePostPatchDelSerializer(ModelSerializer):
         )
 
     def validate(self, data):
-        ingredients = data['ingredients']
+        ingredients = data['recipeingredient']
         ingredients_list = []
 
         for ingredient in ingredients:
@@ -154,7 +154,7 @@ class RecipePostPatchDelSerializer(ModelSerializer):
             if ingredient_id not in ingredients_list:
                 ingredients_list.append(ingredient_id)
             else:
-                ValidationError(
+                raise ValidationError(
                     'В рецепте не может быть повторяющихся ингредиентов.'
                 )
 
