@@ -2,13 +2,14 @@ import base64
 
 from django.core.files.base import ContentFile
 from djoser.serializers import UserCreateSerializer, UserSerializer
-from recipes.models import (Ingredient, Recipe, RecipeFavorite,
-                            RecipeIngredient, ShoppingCart, Tag)
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from rest_framework.fields import IntegerField, SerializerMethodField
 from rest_framework.serializers import (ImageField, ModelSerializer,
                                         PrimaryKeyRelatedField, ReadOnlyField)
+
+from recipes.models import (Ingredient, Recipe, RecipeFavorite,
+                            RecipeIngredient, ShoppingCart, Tag)
 from users.models import Subscription, User
 
 
@@ -144,6 +145,26 @@ class RecipePostPatchDelSerializer(ModelSerializer):
             'ingredients', 'tags', 'cooking_time',
         )
 
+    def validate(self, data):
+        ingredients = data['ingredients']
+        ingredients_list = []
+
+        for ingredient in ingredients:
+            ingredient_id = ingredient['id']
+            if ingredient_id not in ingredients_list:
+                ingredients_list.append(ingredient_id)
+            else:
+                ValidationError(
+                    'В рецепте не может быть повторяющихся ингредиентов.'
+                )
+
+            if int(ingredient['amount']) <= 0:
+                raise ValidationError(
+                    'Ингредиентов должно быть больше нуля).'
+                )
+
+        return data
+
     def create_update_ingredients(self, recipe, ingredients):
         for ingredient in ingredients:
             current_ingredient = Ingredient.objects.get(id=ingredient['id'])
@@ -165,16 +186,11 @@ class RecipePostPatchDelSerializer(ModelSerializer):
     def update(self, instance, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('recipeingredient')
-
-        instance = super().update(instance, validated_data)
-
         instance.tags.clear()
         instance.ingredients.clear()
-
-        instance.tags.set(tags)
         self.create_update_ingredients(instance, ingredients)
-        instance.save()
-        return instance
+        instance.tags.set(tags)
+        return super().update(instance, validated_data)
 
     def to_representation(self, instance):
         return RecipeGetSerializer(instance).data
