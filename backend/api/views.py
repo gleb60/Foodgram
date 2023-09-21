@@ -125,21 +125,32 @@ class ShoppingCartViewSet(ModelViewSet):
             return Response(status=status.HTTP_204_NO_CONTENT)
 
     def download_shopping_cart(self, request):
-        ingredient_list = 'Ваш список ингредиентов: '
+        ingredient_list = {}
+        data = ['Ваш список покупок: ']
+        i = 1
         ingredients = (
             RecipeIngredient.objects
             .filter(recipe__shopping_cart__user=request.user)
-            .values('ingredient__name', 'ingredient__measurement_unit')
+            .values_list('ingredient__name', 'ingredient__measurement_unit')
             .annotate(amount=Sum('amount'))
         )
 
         for ingredient in ingredients:
-            ingredient_list += (
-                f"\n{ingredient['ingredient__name']}"
-                f"({ingredient['ingredient__measurement_unit']}) - "
-                f"{ingredient['amount']}")
+            name = ingredient[0]
+            amount = ingredient[2]
+            measure = ingredient[1]
+            if name not in ingredient_list:
+                ingredient_list[name] = [measure, amount]
+            else:
+                ingredient_list[name][1] += amount
+                print(ingredient_list[name][1])
 
-        return HttpResponse(ingredient_list, content_type='application')
+        for key, value in ingredient_list.items():
+            result = f'\n{i} - {key}({value[0]}) - {value[1]} '
+            data.append(result)
+            i += 1
+
+        return HttpResponse(data, content_type='application')
 
 
 class TagsViewSet(ModelViewSet):
