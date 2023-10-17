@@ -1,28 +1,19 @@
 # Foodgram
  С помощью этого приложения можно делиться рецептами по всему земному шару!)<br/>
 ### Технологии
-#### *Python*
-#### *Django*
-#### *PostgreSQL*
-#### *API DRF*
-#### *Docker*
-#### *GitHub*
+#### Python
+#### Django
+#### PostgreSQL
+#### API DRF
+#### Docker
+#### GitHub
 
 Сайт
 
 ```
 https://foodgramapp.ddnsking.com/
 ```
-Логин админа
 
-```
-a@a.ru
-```
-Пароль админа
-
-```
-qazwsxedc132
-```
 ### Запуск проекта:
 1. Клонируйте проект:
 ```commandline
