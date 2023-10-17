@@ -1,5 +1,4 @@
-![Actions Status](https://github.com/gleb60/foodgram-project-react/actions/workflows/main.yml/badge.svg)
-
+![Actions Status](https://github.com/gleb60/foodgram-project-react/actions/workflows/foodgram.yml/badge.svg)
 # Foodgram
  С помощью этого приложения можно делиться рецептами по всему земному шару!)<br/>
 ### Технологии
